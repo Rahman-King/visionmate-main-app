@@ -6,6 +6,8 @@ import numpy as np
 import tempfile
 import os
 import time
+import av # Added for frame handling
+from streamlit_webrtc import webrtc_streamer # Added for browser camera support
 
 # ------------------ PAGE SETUP ------------------
 st.set_page_config(page_title="Team Visionx 🤟", layout="wide")
@@ -121,51 +123,40 @@ if page == "🤟 Detection":
     st.header("🧭 Smart Navigation Assistant")
     mode = st.radio("Select Input Mode", ["📷 Webcam", "🖼️ Image", "🎞️ Video"])
 
-    # ------------------ WEBCAM ------------------
+    # ------------------ WEBCAM (ONLY PART CHANGED) ------------------
     if mode == "📷 Webcam":
-        run = st.toggle("▶ Start Camera")
-        FRAME_WINDOW = st.image([])
-        nav_text = st.empty()
+        def video_frame_callback(frame):
+            img = frame.to_ndarray(format="bgr24")
+            img = cv2.flip(img, 1)
+            h, w = img.shape[:2]
 
-        if run:
-            cap = cv2.VideoCapture(0)
-            if not cap.isOpened():
-                st.error("❌ Cannot open camera.")
-                st.stop()
+            results = model(img, conf=confidence, verbose=False)
+            annotated = results[0].plot()
 
-            while run:
-                ret, frame = cap.read()
-                if not ret:
-                    break
+            detections = []
+            for box in results[0].boxes:
+                cls_id = int(box.cls)
+                classname = model.names[cls_id]
+                xmin, ymin, xmax, ymax = box.xyxy.cpu().numpy().squeeze().astype(int)
+                position = get_position(xmin, xmax, w)
+                area = (xmax - xmin) * (ymax - ymin)
+                detections.append((classname, position, area))
 
-                frame = cv2.flip(frame, 1)
-                h, w = frame.shape[:2]
+            full_sentence = smart_navigation(detections)
 
-                results = model(frame, conf=confidence, verbose=False)
-                annotated = results[0].plot()
+            if should_speak(full_sentence):
+                speak_phrase(full_sentence)
 
-                detections = []
+            return av.VideoFrame.from_ndarray(annotated, format="bgr24")
 
-                for box in results[0].boxes:
-                    cls_id = int(box.cls)
-                    classname = model.names[cls_id]
-                    xmin, ymin, xmax, ymax = box.xyxy.cpu().numpy().squeeze().astype(int)
-                    position = get_position(xmin, xmax, w)
-                    area = (xmax - xmin) * (ymax - ymin)
-                    detections.append((classname, position, area))
+        webrtc_streamer(
+            key="yolo-camera",
+            video_frame_callback=video_frame_callback,
+            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            media_stream_constraints={"video": True, "audio": False},
+        )
 
-                full_sentence = smart_navigation(detections)
-
-                nav_text.markdown(f"## 🧭 {full_sentence}")
-
-                if should_speak(full_sentence):
-                    speak_phrase(full_sentence)
-
-                FRAME_WINDOW.image(annotated, channels="BGR")
-
-            cap.release()
-
-    # ------------------ IMAGE ------------------
+    # ------------------ IMAGE (UNTOUCHED) ------------------
     elif mode == "🖼️ Image":
         uploaded = st.file_uploader("Upload an image", type=["jpg", "png", "jpeg"])
         if uploaded:
@@ -192,7 +183,7 @@ if page == "🤟 Detection":
             st.markdown(f"## 🧭 {full_sentence}")
             speak_phrase(full_sentence)
 
-    # ------------------ VIDEO ------------------
+    # ------------------ VIDEO (UNTOUCHED) ------------------
     elif mode == "🎞️ Video":
         uploaded = st.file_uploader("Upload a video", type=["mp4", "avi", "mov"])
         if uploaded:
@@ -235,7 +226,7 @@ if page == "🤟 Detection":
             cap.release()
             os.unlink(tmp.name)
 
-# ------------------ RATE US ------------------
+# ------------------ RATE US (UNTOUCHED) ------------------
 elif page == "⭐ Rate Us":
     st.header("⭐ Rate Team VisionX")
     rating = st.slider("Rate us out of 5 ⭐", 1, 5, 5)
@@ -243,3 +234,4 @@ elif page == "⭐ Rate Us":
     if st.button("Submit"):
         st.success("Thank you for your feedback!")
         speak_phrase("Thank you for your feedback")
+
