@@ -1,0 +1,2 @@
+espeak
+freeglut3-dev
