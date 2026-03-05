@@ -1,4 +1,4 @@
-# Team Visionx 🤟 – Smart Navigation & Object Detection Assistant
+# Team Visionx 🤟 Vision Mate-mSmart Navigation & Object Detection Assistant
 
 **Empowering the Visually Impaired through AI-Driven Spatial Awareness.**
 
@@ -18,7 +18,7 @@
 ## 🔍 Overview
 **Team Visionx** is an assistive technology application designed to provide real-time spatial awareness for the visually impaired. Built using **Streamlit** and **YOLOv8**, the app acts as a "digital eye," identifying objects in the environment and translating their position into actionable voice instructions.
 
-The project moves beyond simple labeling—it calculates the proximity and orientation of objects to guide users safely around obstacles.
+This a test project moves beyond simple labeling—it calculates the proximity and orientation of objects to guide users safely around obstacles.
 
 ---
 
