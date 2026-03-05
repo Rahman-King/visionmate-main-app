@@ -1,4 +1,4 @@
-# Team Visionx 🤟 Vision Mate-mSmart Navigation & Object Detection Assistant
+# Team Visionx 🤟 Vision Mate- Smart Navigation & Object Detection Assistant
 
 **Empowering the Visually Impaired through AI-Driven Spatial Awareness.**
 
